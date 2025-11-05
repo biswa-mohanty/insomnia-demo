@@ -5,6 +5,12 @@ meta:
   created: 1762354898328
   modified: 1762354898328
   description: ""
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_907da1f17bd0f5751b1cfd82f3c4d65a9abd25c2
+    created: 1762354938622
+    modified: 1762354938622
 environments:
   name: Base Environment
   meta:
@@ -88,18 +94,18 @@ spec:
                     Example Flights List:
                       value: |
                         [
-                           {
-                             "number": "KD924",
-                             "route_id": "LHR-SFO",
-                             "scheduled_departure": "2024-03-20T09:12:28Z",
-                             "scheduled_arrival": "2024-03-20T19:12:28Z"
-                           },
-                           {
-                             "number": "KD925",
-                             "route_id": "SFO-LHR",
-                             "scheduled_departure": "2024-03-21T09:12:28Z",
-                             "scheduled_arrival": "2024-03-21T19:12:28Z"
-                           }
+                          {
+                            "number": "KD924",
+                            "route_id": "LHR-SFO",
+                            "scheduled_departure": "2024-03-20T09:12:28Z",
+                            "scheduled_arrival": "2024-03-20T19:12:28Z"
+                          },
+                          {
+                            "number": "KD925",
+                            "route_id": "SFO-LHR",
+                            "scheduled_departure": "2024-03-21T09:12:28Z",
+                            "scheduled_arrival": "2024-03-21T19:12:28Z"
+                          }
                         ]
       /flights/{flightNumber}:
         get:
@@ -224,4 +230,4 @@ spec:
   meta:
     id: spc_85bf89c9f41e4d2fb7841088a3ade751
     created: 1762354898330
-    modified: 1762354898331
+    modified: 1762355019789
