@@ -191,6 +191,40 @@ spec:
                         type: string
     components:
       schemas:
+        ErrorResponse:
+          type: object
+          properties:
+            name:
+              type: string
+            message:
+              type: string
+            errorCode:
+              type: string
+            correlationId:
+              type: string
+            traceId:
+              type: string
+            issues:
+              type: array
+              items:
+                $ref: "#/components/schemas/ErrorIssue"
+          required:
+            - name
+            - message
+            - errorCode
+            - correlationId
+            - traceId
+            - issues
+        ErrorIssue:
+          type: object
+          properties:
+            field:
+              type: string
+            issue:
+              type: string
+          required:
+            - field
+            - issue
         Flight:
           type: object
           properties:
@@ -230,4 +264,4 @@ spec:
   meta:
     id: spc_85bf89c9f41e4d2fb7841088a3ade751
     created: 1762354898330
-    modified: 1762355019789
+    modified: 1762367569465
