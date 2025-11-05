@@ -67,8 +67,7 @@ rules:
       function: pattern
       functionOptions:
         # This regex matches a comma-separated list of the allowed values, case-insensitive.
-        match: "^(dev|qa|stg|prd)(,\\s*(dev|qa|stg|prd))*$"
-        flags: "i" # 'i' flag makes the match case-insensitive
+        match: "(?i)^(dev|qa|stg|prd)(,\\s*(dev|qa|stg|prd))*$"
     severity: error
 
   #
