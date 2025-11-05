@@ -81,7 +81,7 @@ rules:
     message: "{{path}} does not match the common error schema. {{error}}"
     severity: error
     # 'given' targets the schema of any 4xx/5xx response that has an application/json content type.
-    given: "$.paths.*[get,post,put,patch,delete].responses[?(@property.match(/^[45]/))].content['application/json'].schema"
+    given: "$.paths[*][*].responses[?(@property.match(/^/) || @property === '4XX' || @property === '5XX')].content.*.schema"
     then:
       function: schema
       # The 'schema' functionOption contains the JSON Schema to validate against.
