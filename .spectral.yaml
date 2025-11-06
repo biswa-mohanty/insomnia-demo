@@ -11,6 +11,15 @@ rules:
   # These rules enforce your team's specific requirements for the info block.
   #
 
+  info-description-required:
+    description: "Info block must have a description."
+    message: "The info block is missing a non-empty description."
+    given: $.info
+    then:
+      field: description
+      function: truthy
+    severity: error
+
   info-contact-required:
     description: "Info object must have a contact object."
     message: "The info block must include a 'contact' object."
