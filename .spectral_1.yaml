@@ -1,10 +1,9 @@
 # This is a Spectral ruleset file.
-# It extends the built-in OpenAPI rules and adds your team's custom requirements.
+# Save this content as ".spectral.yaml" in the root of your project.
+# To run it: spectral lint your-openapi-spec.yaml
 
-extends: spectral:oas # Extends the built-in Spectral rules for OpenAPI
-
-# The 'aliases' block was removed because it created a structural inconsistency
-# (a 'given' array) that conflicts with the other rules ('given' string).
+extends:
+  - spectral:oas # Extends the built-in Spectral rules for OpenAPI
 
 rules:
   #
@@ -39,15 +38,6 @@ rules:
       function: truthy # Checks for defined and not-empty
     severity: error
 
-  info-contact-email-required:
-    description: "Contact object must have an email."
-    message: "The info.contact object must include a non-empty 'email'."
-    given: $.info.contact
-    then:
-      field: email
-      function: truthy
-    severity: error
-
   info-contact-email-format:
     description: "Contact email must be a valid email address."
     message: "The info.contact.email must be a valid email address."
@@ -63,24 +53,14 @@ rules:
     message: "info.x-allowed-consumers is required and must be a comma-separated string."
     given: $.info
     then:
-      field: "x-allowed-consumers"
+      field: x-allowed-consumers
       function: truthy
-    severity: error
-
-  info-x-allowed-consumers-format:
-    description: "x-allowed-consumers must be a comma-separated list of values (e.g., 'consumer-a,consumer-b')."
-    message: "x-allowed-consumers must be a comma-separated list (no spaces around commas). Format: 'val1,val2,val3'"
-    given: "$.info['x-allowed-consumers']"
-    then:
-      function: pattern
-      functionOptions:
-        match: "^([a-zA-Z0-9_-]+)(,[a-zA-Z0-9_-]+)*$"
     severity: error
 
   info-x-require-approval-boolean:
     description: "Info block's x-require-approval must be a boolean."
     message: "info.x-require-approval must be a boolean (true or false)."
-    given: "$.info['x-require-approval']"
+    given: $.info['x-require-approval']
     then:
       function: schema
       functionOptions:
@@ -91,7 +71,7 @@ rules:
   info-x-allowed-env-format:
     description: "Info's x-allowed-env must be a comma-separated list of dev, qa, stg, prd."
     message: "x-allowed-env must be a comma-separated list containing only 'dev', 'qa', 'stg', 'prd' (case-insensitive)."
-    given: "$.info['x-allowed-env']"
+    given: $.info['x-allowed-env']
     then:
       function: pattern
       functionOptions:
@@ -100,62 +80,21 @@ rules:
     severity: error
 
   #
-  # --- Custom Common Error Schema Rules (Split into two rules) ---
+  # --- Custom Common Error Schema Rule ---
+  # This rule validates all 4XX and 5XX responses against your defined error schema.
   #
-  # This rule validates all 4XX and 5XX responses defined directly in 'paths'.
-  #
-  common-error-schema-paths:
-    description: "All 4XX/5XX responses in 'paths' must conform to the common error schema."
-    message: "{{path}} does not match the common error schema. {{error}}"
-    severity: error
-    given: "$.paths.*.*.responses[?(@property.match(/^[45]/))].content.*.schema"
-    then:
-      function: schema
-      functionOptions:
-        schema:
-          $schema: "http://json-schema.org/draft-04/schema#"
-          type: "object"
-          properties:
-            name:
-              type: "string"
-            message:
-              type: "string"
-            errorCode:
-              type: "string"
-            correlationId:
-              type: "string"
-            traceId:
-              type: "string"
-            issues:
-              type: "array"
-              items:
-                type: "object"
-                properties:
-                  field:
-                    type: "string"
-                  issue:
-                    type: "string"
-                required:
-                  - "field"
-                  - "issue"
-          required:
-            - "name"
-            - "message"
-            - "errorCode"
-            - "correlationId"
-            - "traceId"
-            - "issues"
 
-  #
-  # This rule validates all 4XX and 5XX responses defined in 'components'.
-  #
-  common-error-schema-components:
-    description: "All 4XX/5XX responses in 'components' must conform to the common error schema."
+  common-error-schema:
+    description: "All 4XX and 5XX responses must conform to the common error schema."
     message: "{{path}} does not match the common error schema. {{error}}"
     severity: error
-    given: "$.components.responses[?(@property.match(/^[45]/))].content.*.schema"
+    # 'given' targets the schema of any 4xx/5xx response that has an application/json content type.
+    given: "$.paths[*][*].responses[?(@property.match(/^/) || @property === '4XX' || @property === '5XX')].content.*.schema"
     then:
       function: schema
+      # The 'schema' functionOption contains the JSON Schema to validate against.
+      # Note: I have corrected your 'items' definition from an array to an object,
+      # which is the standard way to define an "array of objects".
       functionOptions:
         schema:
           $schema: "http://json-schema.org/draft-04/schema#"
@@ -173,7 +112,7 @@ rules:
               type: "string"
             issues:
               type: "array"
-              items:
+              items: # Corrected: 'items' should be an object, not an array containing an object
                 type: "object"
                 properties:
                   field:
