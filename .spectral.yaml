@@ -1,15 +1,71 @@
-# This is a Spectral ruleset file.
-# Save this content as ".spectral.yaml" in the root of your project.
-# To run it: spectral lint your-openapi-spec.yaml
+# This file extends the default OpenAPI ruleset and adds custom rules.
+# It enforces a specific info block structure and a common error schema.
+extends: spectral:oas
 
-extends:
-  - spectral:oas # Extends the built-in Spectral rules for OpenAPI
+aliases:
+  ErrorResponses:
+    description: "All 4XX and 5XX responses."
+    targets:
+      # This path is much simpler and more stable to avoid Nimma crashes.
+      # It selects any response where the key (the status code)
+      # starts with a '4' or a '5' using a regex match.
+      - given: "$.paths.*.*.responses[?(@property.match(/^[45]/))]"
+      - given: "$.components.responses[?(@property.match(/^[45]/))]"
 
 rules:
-  #
-  # --- Custom Info Block Rules ---
-  # These rules enforce your team's specific requirements for the info block.
-  #
+  # Rule to enforce a common error schema for all 4XX and 5XX responses.
+  common-error-schema:
+    description: "All 4XX and 5XX responses must use the common error schema."
+    message: "The schema for this error response does not match the common error schema. {{error}}"
+    # Use the alias to target all 4XX/5XX responses
+    given: $.ErrorResponses.content.*.schema
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            message:
+              type: string
+            errorCode:
+              type: string
+            correlationId:
+              type: string
+            traceId:
+              type: string
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  issue:
+                    type: string
+                required:
+                  - field
+                  - issue
+          required:
+            - name
+            - message
+            - errorCode
+            - correlationId
+            - traceId
+            - issues
+    severity: error
+
+  # --- Info Block Rules ---
+
+  info-contact-required:
+    description: "Info block must have a contact."
+    message: "The info block is missing a contact object."
+    given: $.info
+    then:
+      field: contact
+      function: truthy
+    severity: error
 
   info-description-required:
     description: "Info block must have a description."
@@ -20,122 +76,72 @@ rules:
       function: truthy
     severity: error
 
-  info-contact-required:
-    description: "Info object must have a contact object."
-    message: "The info block must include a 'contact' object."
-    given: $.info
-    then:
-      field: contact
-      function: defined
-    severity: error
-
-  info-contact-name-required:
-    description: "Contact object must have a name."
-    message: "The info.contact object must include a 'name'."
+  info-contact-name:
+    description: "Info contact must have a name."
+    message: "The info.contact object is missing a 'name'."
     given: $.info.contact
     then:
       field: name
-      function: truthy # Checks for defined and not-empty
+      function: truthy
     severity: error
 
-  info-contact-email-format:
-    description: "Contact email must be a valid email address."
-    message: "The info.contact.email must be a valid email address."
-    given: $.info.contact.email
+  info-contact-email:
+    description: "Info contact must have an email."
+    message: "The info.contact object is missing an 'email'."
+    given: $.info.contact
     then:
-      function: pattern
-      functionOptions:
-        match: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+      field: email
+      function: truthy
     severity: error
 
   info-x-allowed-consumers-required:
-    description: "Info block must specify x-allowed-consumers."
-    message: "info.x-allowed-consumers is required and must be a comma-separated string."
+    description: "info.x-allowed-consumers is required and must be a comma separated string."
+    message: "info.x-allowed-consumers is required and must be a non-empty string."
     given: $.info
     then:
       field: x-allowed-consumers
       function: truthy
     severity: error
 
-  info-x-require-approval-boolean:
-    description: "Info block's x-require-approval must be a boolean."
-    message: "info.x-require-approval must be a boolean (true or false)."
-    given: $.info['x-require-approval']
+  info-x-allowed-consumers-format:
+    description: "x-allowed-consumers must be a comma-separated list of values (e.g., 'consumer-a, consumer-b')."
+    message: "x-allowed-consumers must be a comma-separated list (no spaces around commas). Format: 'val1,val2,val3'"
+    given: "$.info.x-allowed-consumers"
+    then:
+      function: pattern
+      functionOptions:
+        # This regex ensures it's a list of non-empty values separated by commas, with no trailing comma.
+        match: "^([a-zA-Z0-9_-]+)(,[a-zA-Z0-9_-]+)*$"
+    severity: "error"
+
+  info-x-require-approval-format:
+    description: "x-require-approval must be a boolean (true or false)."
+    message: "info.x-require-approval must be a boolean value (true/false)."
+    given: "$.info.x-require-approval"
     then:
       function: schema
       functionOptions:
         schema:
           type: boolean
-    severity: error
+    severity: "error"
 
   info-x-allowed-env-format:
-    description: "Info's x-allowed-env must be a comma-separated list of dev, qa, stg, prd."
+    description: "x-allowed-env must be a comma-separated list of allowed environments (dev, qa, stg, prd)."
     message: "x-allowed-env must be a comma-separated list containing only 'dev', 'qa', 'stg', 'prd' (case-insensitive)."
-    given: $.info['x-allowed-env']
+    given: "$.info.x-allowed-env"
     then:
       function: pattern
       functionOptions:
-        # This regex matches a comma-separated list of the allowed values, case-insensitive.
-        match: "(?i)^(dev|qa|stg|prd)(,\\s*(dev|qa|stg|prd))*$"
-    severity: error
+        # (?i) makes it case-insensitive.
+        # Allows 'dev', 'qa', 'stg', 'prd' in any combination, separated by commas.
+        match: "^(?i)(dev|qa|stg|prd)(,(dev|qa|stg|prd))*$"
+    severity: "error"
 
-  #
-  # --- Custom Common Error Schema Rule ---
-  # This rule validates all 4XX and 5XX responses against your defined error schema.
-  #
+  # --- Tags Rules ---
 
-  common-error-schema:
-    description: "All 4XX and 5XX responses must conform to the common error schema."
-    message: "{{path}} does not match the common error schema. {{error}}"
-    severity: error
-    # 'given' targets the schema of any 4xx/5xx response that has an application/json content type.
-    given: "$.paths[*][*].responses[?(@property.match(/^/) || @property === '4XX' || @property === '5XX')].content.*.schema"
-    then:
-      function: schema
-      # The 'schema' functionOption contains the JSON Schema to validate against.
-      # Note: I have corrected your 'items' definition from an array to an object,
-      # which is the standard way to define an "array of objects".
-      functionOptions:
-        schema:
-          $schema: "http://json-schema.org/draft-04/schema#"
-          type: "object"
-          properties:
-            name:
-              type: "string"
-            message:
-              type: "string"
-            errorCode:
-              type: "string"
-            correlationId:
-              type: "string"
-            traceId:
-              type: "string"
-            issues:
-              type: "array"
-              items: # Corrected: 'items' should be an object, not an array containing an object
-                type: "object"
-                properties:
-                  field:
-                    type: "string"
-                  issue:
-                    type: "string"
-                required:
-                  - "field"
-                  - "issue"
-          required:
-            - "name"
-            - "message"
-            - "errorCode"
-            - "correlationId"
-            - "traceId"
-            - "issues"
-
-  #
-  # --- Tag Rules ---
-  #
   tag-description:
-    description: Please provide a description for each tag.
-    message: "Each tag must have a non-empty description."
+    description: "Please provide a description for each tag."
+    message: "The tag '{{value.name}}' is missing a description."
     given: $.tags[*]
     then:
       field: description
