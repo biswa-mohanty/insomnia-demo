@@ -112,7 +112,7 @@ rules:
       functionOptions:
         # This regex ensures it's a list of non-empty values separated by commas, with no trailing comma.
         match: "^([a-zA-Z0-9_-]+)(,[a-zA-Z0-9_-]+)*$"
-    severity: "error"
+    severity: error
 
   info-x-require-approval-format:
     description: "x-require-approval must be a boolean (true or false)."
@@ -123,7 +123,7 @@ rules:
       functionOptions:
         schema:
           type: boolean
-    severity: "error"
+    severity: error
 
   info-x-allowed-env-format:
     description: "x-allowed-env must be a comma-separated list of allowed environments (dev, qa, stg, prd)."
@@ -135,7 +135,7 @@ rules:
         # (?i) makes it case-insensitive.
         # Allows 'dev', 'qa', 'stg', 'prd' in any combination, separated by commas.
         match: "^(?i)(dev|qa|stg|prd)(,(dev|qa|stg|prd))*$"
-    severity: "error"
+    severity: error
 
   # --- Tags Rules ---
 
