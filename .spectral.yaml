@@ -96,7 +96,8 @@ rules:
       function: pattern
       functionOptions:
         # This regex matches a comma-separated list of the allowed values, case-insensitive.
-        match: "(?i)^(dev|qa|stg|prd)(,\\s*(dev|qa|stg|prd))*$"
+        # We write it out manually [dD][eE][vV]... because the (?i) flag is not supported.
+        match: "^([dD][eE][vV]|[qQ][aA]|[sS][tT][gG]|[pP][rR][dD])(,\\s*([dD][eE][vV]|[qQ][aA]|[sS][tT][gG]|[pP][rR][dD]))*$"
     severity: error
 
   #
